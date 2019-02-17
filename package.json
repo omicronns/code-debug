@@ -649,6 +649,7 @@
 	},
 	"dependencies": {
 		"assert": "^1.4.1",
+		"vscode": "^1.1.29",
 		"vscode-debugadapter": "^1.16.0"
 	},
 	"devDependencies": {
@@ -657,9 +658,6 @@
 		"mocha": "^5.2.0",
 		"tslint": "^5.11.0",
 		"tslint-language-service": "^0.9.9",
-		"typescript": "^2.1.6",
-		"vscode": "^1.1.29",
-		"vscode-debugadapter": "^1.16.0",
-		"vscode-debugprotocol": "^1.33.0"
+		"typescript": "^2.1.6"
 	}
 }
