@@ -17,19 +17,6 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	showDevDebugOutput: boolean;
 }
 
-export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {
-	cwd: string;
-	target: string;
-	lldbmipath: string;
-	env: any;
-	debugger_args: string[];
-	executable: string;
-	autorun: string[];
-	valuesFormatting: ValuesFormattingMode;
-	printCalls: boolean;
-	showDevDebugOutput: boolean;
-}
-
 class LLDBDebugSession extends MI2DebugSession {
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
 		response.body.supportsHitConditionalBreakpoints = true;
@@ -66,25 +53,6 @@ class LLDBDebugSession extends MI2DebugSession {
 				if (this.crashed)
 					this.handlePause(undefined);
 			});
-		});
-	}
-
-	protected attachRequest(response: DebugProtocol.AttachResponse, args: AttachRequestArguments): void {
-		this.miDebugger = new MI2_LLDB(args.lldbmipath || "lldb-mi", [], args.debugger_args, args.env);
-		this.initDebugger();
-		this.quit = false;
-		this.attached = true;
-		this.needContinue = true;
-		this.debugReady = false;
-		this.setValuesFormattingMode(args.valuesFormatting);
-		this.miDebugger.printCalls = !!args.printCalls;
-		this.miDebugger.debugOutput = !!args.showDevDebugOutput;
-		this.miDebugger.attach(args.cwd, args.executable, args.target).then(() => {
-			if (args.autorun)
-				args.autorun.forEach(command => {
-					this.miDebugger.sendUserInput(command);
-				});
-			this.sendResponse(response);
 		});
 	}
 }

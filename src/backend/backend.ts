@@ -35,8 +35,6 @@ export interface Variable {
 
 export interface IBackend {
 	load(cwd: string, target: string, procArgs: string): Thenable<any>;
-	attach(cwd: string, executable: string, target: string): Thenable<any>;
-	connect(cwd: string, executable: string, target: string): Thenable<any>;
 	start(): Thenable<boolean>;
 	stop();
 	detach();
@@ -45,17 +43,13 @@ export interface IBackend {
 	next(): Thenable<boolean>;
 	step(): Thenable<boolean>;
 	stepOut(): Thenable<boolean>;
-	loadBreakPoints(breakpoints: Breakpoint[]): Thenable<[boolean, Breakpoint][]>;
 	addBreakPoint(breakpoint: Breakpoint): Thenable<[boolean, Breakpoint]>;
-	removeBreakPoint(breakpoint: Breakpoint): Thenable<boolean>;
 	clearBreakPoints(): Thenable<any>;
 	getThreads(): Thenable<Thread[]>;
 	getStack(maxLevels: number, thread: number): Thenable<Stack[]>;
 	getStackVariables(thread: number, frame: number): Thenable<Variable[]>;
 	evalExpression(name: string, thread: number, frame: number): Thenable<any>;
-	isReady(): boolean;
 	changeVariable(name: string, rawValue: string): Thenable<any>;
-	examineMemory(from: number, to: number): Thenable<any>;
 }
 
 export class VariableObject {

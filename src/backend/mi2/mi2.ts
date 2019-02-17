@@ -83,64 +83,6 @@ export class MI2 extends EventEmitter implements IBackend {
 		return cmds;
 	}
 
-	attach(cwd: string, executable: string, target: string): Thenable<any> {
-		return new Promise((resolve, reject) => {
-			let args = [];
-			if (executable && !nativePath.isAbsolute(executable))
-				executable = nativePath.join(cwd, executable);
-			if (!executable)
-				executable = "-p";
-			let isExtendedRemote = false;
-			if (target.startsWith("extended-remote")) {
-				isExtendedRemote = true;
-				args = this.preargs;
-			} else
-				args = args.concat([executable, target], this.preargs);
-			this.process = ChildProcess.spawn(this.application, args, { cwd: cwd, env: this.procEnv });
-			this.process.stdout.on("data", this.stdout.bind(this));
-			this.process.stderr.on("data", this.stderr.bind(this));
-			this.process.on("exit", (() => { this.emit("quit"); }).bind(this));
-			this.process.on("error", ((err) => { this.emit("launcherror", err); }).bind(this));
-			const commands = [
-				this.sendCommand("gdb-set target-async on"),
-				this.sendCommand("environment-directory \"" + escape(cwd) + "\"")
-			];
-			if (isExtendedRemote) {
-				commands.push(this.sendCommand("target-select " + target));
-				commands.push(this.sendCommand("file-symbol-file \"" + escape(executable) + "\""));
-			}
-			Promise.all(commands).then(() => {
-				this.emit("debug-ready");
-				resolve();
-			}, reject);
-		});
-	}
-
-	connect(cwd: string, executable: string, target: string): Thenable<any> {
-		return new Promise((resolve, reject) => {
-			let args = [];
-			if (executable && !nativePath.isAbsolute(executable))
-				executable = nativePath.join(cwd, executable);
-			if (executable)
-				args = args.concat([executable], this.preargs);
-			else
-				args = this.preargs;
-			this.process = ChildProcess.spawn(this.application, args, { cwd: cwd, env: this.procEnv });
-			this.process.stdout.on("data", this.stdout.bind(this));
-			this.process.stderr.on("data", this.stderr.bind(this));
-			this.process.on("exit", (() => { this.emit("quit"); }).bind(this));
-			this.process.on("error", ((err) => { this.emit("launcherror", err); }).bind(this));
-			Promise.all([
-				this.sendCommand("gdb-set target-async on"),
-				this.sendCommand("environment-directory \"" + escape(cwd) + "\""),
-				this.sendCommand("target-select remote " + target)
-			]).then(() => {
-				this.emit("debug-ready");
-				resolve();
-			}, reject);
-		});
-	}
-
 	stdout(data) {
 		if (trace)
 			this.log("stderr", "stdout: " + data);
@@ -355,16 +297,6 @@ export class MI2 extends EventEmitter implements IBackend {
 		return this.sendCommand("gdb-set var " + name + "=" + rawValue);
 	}
 
-	loadBreakPoints(breakpoints: Breakpoint[]): Thenable<[boolean, Breakpoint][]> {
-		if (trace)
-			this.log("stderr", "loadBreakPoints");
-		const promisses = [];
-		breakpoints.forEach(breakpoint => {
-			promisses.push(this.addBreakPoint(breakpoint));
-		});
-		return Promise.all(promisses);
-	}
-
 	setBreakPointCondition(bkptNum, condition): Thenable<any> {
 		if (trace)
 			this.log("stderr", "setBreakPointCondition");
@@ -419,21 +351,6 @@ export class MI2 extends EventEmitter implements IBackend {
 					reject(result);
 				}
 			}, reject);
-		});
-	}
-
-	removeBreakPoint(breakpoint: Breakpoint): Thenable<boolean> {
-		if (trace)
-			this.log("stderr", "removeBreakPoint");
-		return new Promise((resolve, reject) => {
-			if (!this.breakpoints.has(breakpoint))
-				return resolve(false);
-			this.sendCommand("break-delete " + this.breakpoints.get(breakpoint)).then((result) => {
-				if (result.resultRecords.resultClass == "done") {
-					this.breakpoints.delete(breakpoint);
-					resolve(true);
-				} else resolve(false);
-			});
 		});
 	}
 
@@ -530,16 +447,6 @@ export class MI2 extends EventEmitter implements IBackend {
 		return ret;
 	}
 
-	examineMemory(from: number, length: number): Thenable<any> {
-		if (trace)
-			this.log("stderr", "examineMemory");
-		return new Promise((resolve, reject) => {
-			this.sendCommand("data-read-memory-bytes 0x" + from.toString(16) + " " + length).then((result) => {
-				resolve(result.result("memory[0].contents"));
-			}, reject);
-		});
-	}
-
 	async evalExpression(name: string, thread: number, frame: number): Promise<MINode> {
 		if (trace)
 			this.log("stderr", "evalExpression");
@@ -634,10 +541,6 @@ export class MI2 extends EventEmitter implements IBackend {
 			};
 			this.sendRaw(sel + "-" + command);
 		});
-	}
-
-	isReady(): boolean {
-		return !!this.process;
 	}
 
 	prettyPrint: boolean = true;

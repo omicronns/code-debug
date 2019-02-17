@@ -17,19 +17,6 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	showDevDebugOutput: boolean;
 }
 
-export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {
-	cwd: string;
-	target: string;
-	gdbpath: string;
-	env: any;
-	debugger_args: string[];
-	executable: string;
-	remote: boolean;
-	autorun: string[];
-	valuesFormatting: ValuesFormattingMode;
-	printCalls: boolean;
-	showDevDebugOutput: boolean;
-}
 
 class GDBDebugSession extends MI2DebugSession {
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
@@ -74,39 +61,6 @@ class GDBDebugSession extends MI2DebugSession {
 		}, err => {
 			this.sendErrorResponse(response, 103, `Failed to load MI Debugger: ${err.toString()}`);
 		});
-	}
-
-	protected attachRequest(response: DebugProtocol.AttachResponse, args: AttachRequestArguments): void {
-		this.miDebugger = new MI2(args.gdbpath || "gdb", ["-q", "--interpreter=mi2"], args.debugger_args, args.env);
-		this.initDebugger();
-		this.quit = false;
-		this.attached = !args.remote;
-		this.needContinue = true;
-		this.debugReady = false;
-		this.setValuesFormattingMode(args.valuesFormatting);
-		this.miDebugger.printCalls = !!args.printCalls;
-		this.miDebugger.debugOutput = !!args.showDevDebugOutput;
-		if (args.remote) {
-			this.miDebugger.connect(args.cwd, args.executable, args.target).then(() => {
-				if (args.autorun)
-					args.autorun.forEach(command => {
-						this.miDebugger.sendUserInput(command);
-					});
-				this.sendResponse(response);
-			}, err => {
-				this.sendErrorResponse(response, 102, `Failed to attach: ${err.toString()}`);
-			});
-		} else {
-			this.miDebugger.attach(args.cwd, args.executable, args.target).then(() => {
-				if (args.autorun)
-					args.autorun.forEach(command => {
-						this.miDebugger.sendUserInput(command);
-					});
-				this.sendResponse(response);
-			}, err => {
-				this.sendErrorResponse(response, 101, `Failed to attach: ${err.toString()}`);
-			});
-		}
 	}
 }
 
