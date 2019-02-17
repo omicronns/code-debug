@@ -29,7 +29,6 @@ export class MI2DebugSession extends DebugSession {
 	protected quit: boolean;
 	protected attached: boolean;
 	protected needContinue: boolean;
-	protected isSSH: boolean;
 	protected trimCWD: string;
 	protected switchCWD: string;
 	protected started: boolean;
@@ -222,11 +221,7 @@ export class MI2DebugSession extends DebugSession {
 		const cb = (() => {
 			this.debugReady = true;
 			this.miDebugger.clearBreakPoints().then(() => {
-				let path = args.source.path;
-				if (this.isSSH) {
-					path = relative(this.trimCWD.replace(/\\/g, "/"), path.replace(/\\/g, "/"));
-					path = resolve(this.switchCWD.replace(/\\/g, "/"), path.replace(/\\/g, "/"));
-				}
+				const path = args.source.path;
 				const all = args.breakpoints.map(brk => {
 					return this.miDebugger.addBreakPoint({ file: path, line: brk.line, condition: brk.condition, countCondition: brk.hitCondition });
 				});
@@ -295,10 +290,7 @@ export class MI2DebugSession extends DebugSession {
 				let source = undefined;
 				let file = element.file;
 				if (file) {
-					if (this.isSSH) {
-						file = relative(this.switchCWD.replace(/\\/g, "/"), file.replace(/\\/g, "/"));
-						file = systemPath.resolve(this.trimCWD.replace(/\\/g, "/"), file.replace(/\\/g, "/"));
-					} else if (process.platform === "win32") {
+					if (process.platform === "win32") {
 						if (file.startsWith("\\cygdrive\\") || file.startsWith("/cygdrive/")) {
 							file = file[10] + ":" + file.substr(11); // replaces /cygdrive/c/foo/bar.txt with c:/foo/bar.txt
 						}

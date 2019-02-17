@@ -2,7 +2,7 @@ import { MI2DebugSession } from './mibase';
 import { DebugSession, InitializedEvent, TerminatedEvent, StoppedEvent, OutputEvent, Thread, StackFrame, Scope, Source, Handles } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { MI2_Mago } from "./backend/mi2/mi2mago";
-import { SSHArguments, ValuesFormattingMode } from './backend/backend';
+import { ValuesFormattingMode } from './backend/backend';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	cwd: string;
@@ -54,7 +54,6 @@ class MagoDebugSession extends MI2DebugSession {
 		this.quit = false;
 		this.attached = false;
 		this.needContinue = false;
-		this.isSSH = false;
 		this.started = false;
 		this.crashed = false;
 		this.debugReady = false;
@@ -84,7 +83,6 @@ class MagoDebugSession extends MI2DebugSession {
 		this.quit = false;
 		this.attached = true;
 		this.needContinue = true;
-		this.isSSH = false;
 		this.debugReady = false;
 		this.setValuesFormattingMode(args.valuesFormatting);
 		this.miDebugger.printCalls = !!args.printCalls;

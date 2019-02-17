@@ -1,4 +1,4 @@
-import { Breakpoint, IBackend, Thread, Stack, SSHArguments, Variable, VariableObject, MIError } from "../backend";
+import { Breakpoint, IBackend, Thread, Stack, Variable, VariableObject, MIError } from "../backend";
 import * as ChildProcess from "child_process";
 import { EventEmitter } from "events";
 import { parseMI, MINode } from '../mi_parse';
@@ -7,7 +7,6 @@ import * as fs from "fs";
 import { posix } from "path";
 import * as nativePath from "path";
 const path = posix;
-import { Client } from "ssh2";
 
 export function escape(str: string) {
 	return str.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
@@ -53,7 +52,6 @@ export class MI2 extends EventEmitter implements IBackend {
 		if (!nativePath.isAbsolute(target))
 			target = nativePath.join(cwd, target);
 		return new Promise((resolve, reject) => {
-			this.isSSH = false;
 			const args = this.preargs.concat(this.extraargs || []);
 			this.process = ChildProcess.spawn(this.application, args, { cwd: cwd, env: this.procEnv });
 			this.process.stdout.on("data", this.stdout.bind(this));
@@ -70,102 +68,9 @@ export class MI2 extends EventEmitter implements IBackend {
 		});
 	}
 
-	ssh(args: SSHArguments, cwd: string, target: string, procArgs: string, attach: boolean): Thenable<any> {
-		return new Promise((resolve, reject) => {
-			this.isSSH = true;
-			this.sshReady = false;
-			this.sshConn = new Client();
-
-			if (args.forwardX11) {
-				this.sshConn.on("x11", (info, accept, reject) => {
-					const xserversock = new net.Socket();
-					xserversock.on("error", (err) => {
-						this.log("stderr", "Could not connect to local X11 server! Did you enable it in your display manager?\n" + err);
-					});
-					xserversock.on("connect", () => {
-						const xclientsock = accept();
-						xclientsock.pipe(xserversock).pipe(xclientsock);
-					});
-					xserversock.connect(args.x11port, args.x11host);
-				});
-			}
-
-			const connectionArgs: any = {
-				host: args.host,
-				port: args.port,
-				username: args.user
-			};
-
-			if (args.useAgent) {
-				connectionArgs.agent = process.env.SSH_AUTH_SOCK;
-			} else if (args.keyfile) {
-				if (require("fs").existsSync(args.keyfile))
-					connectionArgs.privateKey = require("fs").readFileSync(args.keyfile);
-				else {
-					this.log("stderr", "SSH key file does not exist!");
-					this.emit("quit");
-					reject();
-					return;
-				}
-			} else {
-				connectionArgs.password = args.password;
-			}
-
-			this.sshConn.on("ready", () => {
-				this.log("stdout", "Running " + this.application + " over ssh...");
-				const execArgs: any = {};
-				if (args.forwardX11) {
-					execArgs.x11 = {
-						single: false,
-						screen: args.remotex11screen
-					};
-				}
-				let sshCMD = this.application + " " + this.preargs.join(" ");
-				if (args.bootstrap) sshCMD = args.bootstrap + " && " + sshCMD;
-				if (attach)
-					sshCMD += " -p " + target;
-				this.sshConn.exec(sshCMD, execArgs, (err, stream) => {
-					if (err) {
-						this.log("stderr", "Could not run " + this.application + " over ssh!");
-						this.log("stderr", err.toString());
-						this.emit("quit");
-						reject();
-						return;
-					}
-					this.sshReady = true;
-					this.stream = stream;
-					stream.on("data", this.stdout.bind(this));
-					stream.stderr.on("data", this.stderr.bind(this));
-					stream.on("exit", (() => {
-						this.emit("quit");
-						this.sshConn.end();
-					}).bind(this));
-					const promises = this.initCommands(target, cwd, true, attach);
-					promises.push(this.sendCommand("environment-cd \"" + escape(cwd) + "\""));
-					if (procArgs && procArgs.length && !attach)
-						promises.push(this.sendCommand("exec-arguments " + procArgs));
-					Promise.all(promises).then(() => {
-						this.emit("debug-ready");
-						resolve();
-					}, reject);
-				});
-			}).on("error", (err) => {
-				this.log("stderr", "Could not run " + this.application + " over ssh!");
-				this.log("stderr", err.toString());
-				this.emit("quit");
-				reject();
-			}).connect(connectionArgs);
-		});
-	}
-
-	protected initCommands(target: string, cwd: string, ssh: boolean = false, attach: boolean = false) {
-		if (ssh) {
-			if (!path.isAbsolute(target))
-				target = path.join(cwd, target);
-		} else {
-			if (!nativePath.isAbsolute(target))
-				target = nativePath.join(cwd, target);
-		}
+	protected initCommands(target: string, cwd: string, attach: boolean = false) {
+		if (!nativePath.isAbsolute(target))
+			target = nativePath.join(cwd, target);
 		const cmds = [
 			this.sendCommand("gdb-set target-async on", true),
 			this.sendCommand("environment-directory \"" + escape(cwd) + "\"", true)
@@ -373,25 +278,14 @@ export class MI2 extends EventEmitter implements IBackend {
 	}
 
 	stop() {
-		if (this.isSSH) {
-			const proc = this.stream;
-			const to = setTimeout(() => {
-				proc.signal("KILL");
-			}, 1000);
-			this.stream.on("exit", function (code) {
-				clearTimeout(to);
-			});
-			this.sendRaw("-gdb-exit");
-		} else {
-			const proc = this.process;
-			const to = setTimeout(() => {
-				process.kill(-proc.pid);
-			}, 1000);
-			this.process.on("exit", function (code) {
-				clearTimeout(to);
-			});
-			this.sendRaw("-gdb-exit");
-		}
+		const proc = this.process;
+		const to = setTimeout(() => {
+			process.kill(-proc.pid);
+		}, 1000);
+		this.process.on("exit", function (code) {
+			clearTimeout(to);
+		});
+		this.sendRaw("-gdb-exit");
 	}
 
 	detach() {
@@ -713,10 +607,7 @@ export class MI2 extends EventEmitter implements IBackend {
 	sendRaw(raw: string) {
 		if (this.printCalls)
 			this.log("log", raw);
-		if (this.isSSH)
-			this.stream.write(raw + "\n");
-		else
-			this.process.stdin.write(raw + "\n");
+		this.process.stdin.write(raw + "\n");
 	}
 
 	async sendCliCommand(command: string, threadId: number = 0, frameLevel: number = 0) {
@@ -746,21 +637,17 @@ export class MI2 extends EventEmitter implements IBackend {
 	}
 
 	isReady(): boolean {
-		return this.isSSH ? this.sshReady : !!this.process;
+		return !!this.process;
 	}
 
 	prettyPrint: boolean = true;
 	printCalls: boolean;
 	debugOutput: boolean;
 	public procEnv: any;
-	protected isSSH: boolean;
-	protected sshReady: boolean;
 	protected currentToken: number = 1;
 	protected handlers: { [index: number]: (info: MINode) => any } = {};
 	protected breakpoints: Map<Breakpoint, Number> = new Map();
 	protected buffer: string;
 	protected errbuf: string;
 	protected process: ChildProcess.ChildProcess;
-	protected stream;
-	protected sshConn;
 }

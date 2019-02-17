@@ -6,14 +6,9 @@ import * as nativePath from "path";
 const path = posix;
 
 export class MI2_LLDB extends MI2 {
-	protected initCommands(target: string, cwd: string, ssh: boolean = false, attach: boolean = false) {
-		if (ssh) {
-			if (!path.isAbsolute(target))
-				target = path.join(cwd, target);
-		} else {
-			if (!nativePath.isAbsolute(target))
-				target = nativePath.join(cwd, target);
-		}
+	protected initCommands(target: string, cwd: string, attach: boolean = false) {
+		if (!nativePath.isAbsolute(target))
+			target = nativePath.join(cwd, target);
 		const cmds = [
 			this.sendCommand("gdb-set target-async on")
 		];
