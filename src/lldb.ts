@@ -68,7 +68,7 @@ class LLDBDebugSession extends MI2DebugSession {
 			this.isSSH = true;
 			this.trimCWD = args.cwd.replace(/\\/g, "/");
 			this.switchCWD = args.ssh.cwd;
-			this.miDebugger.ssh(args.ssh, args.ssh.cwd, args.target, args.arguments, undefined, false).then(() => {
+			this.miDebugger.ssh(args.ssh, args.ssh.cwd, args.target, args.arguments, false).then(() => {
 				if (args.autorun)
 					args.autorun.forEach(command => {
 						this.miDebugger.sendUserInput(command);
@@ -84,7 +84,7 @@ class LLDBDebugSession extends MI2DebugSession {
 				});
 			});
 		} else {
-			this.miDebugger.load(args.cwd, args.target, args.arguments, undefined).then(() => {
+			this.miDebugger.load(args.cwd, args.target, args.arguments).then(() => {
 				if (args.autorun)
 					args.autorun.forEach(command => {
 						this.miDebugger.sendUserInput(command);

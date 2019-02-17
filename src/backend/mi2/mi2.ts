@@ -2,7 +2,6 @@ import { Breakpoint, IBackend, Thread, Stack, SSHArguments, Variable, VariableOb
 import * as ChildProcess from "child_process";
 import { EventEmitter } from "events";
 import { parseMI, MINode } from '../mi_parse';
-import * as linuxTerm from '../linux/console';
 import * as net from "net";
 import * as fs from "fs";
 import { posix } from "path";
@@ -50,7 +49,7 @@ export class MI2 extends EventEmitter implements IBackend {
 		}
 	}
 
-	load(cwd: string, target: string, procArgs: string, separateConsole: string): Thenable<any> {
+	load(cwd: string, target: string, procArgs: string): Thenable<any> {
 		if (!nativePath.isAbsolute(target))
 			target = nativePath.join(cwd, target);
 		return new Promise((resolve, reject) => {
@@ -64,40 +63,18 @@ export class MI2 extends EventEmitter implements IBackend {
 			const promises = this.initCommands(target, cwd);
 			if (procArgs && procArgs.length)
 				promises.push(this.sendCommand("exec-arguments " + procArgs));
-			if (process.platform == "win32") {
-				if (separateConsole !== undefined)
-					promises.push(this.sendCommand("gdb-set new-console on"));
-				Promise.all(promises).then(() => {
-					this.emit("debug-ready");
-					resolve();
-				}, reject);
-			} else {
-				if (separateConsole !== undefined) {
-					linuxTerm.spawnTerminalEmulator(separateConsole).then(tty => {
-						promises.push(this.sendCommand("inferior-tty-set " + tty));
-						Promise.all(promises).then(() => {
-							this.emit("debug-ready");
-							resolve();
-						}, reject);
-					});
-				} else {
-					Promise.all(promises).then(() => {
-						this.emit("debug-ready");
-						resolve();
-					}, reject);
-				}
-			}
+			Promise.all(promises).then(() => {
+				this.emit("debug-ready");
+				resolve();
+			}, reject);
 		});
 	}
 
-	ssh(args: SSHArguments, cwd: string, target: string, procArgs: string, separateConsole: string, attach: boolean): Thenable<any> {
+	ssh(args: SSHArguments, cwd: string, target: string, procArgs: string, attach: boolean): Thenable<any> {
 		return new Promise((resolve, reject) => {
 			this.isSSH = true;
 			this.sshReady = false;
 			this.sshConn = new Client();
-
-			if (separateConsole !== undefined)
-				this.log("stderr", "WARNING: Output to terminal emulators are not supported over SSH");
 
 			if (args.forwardX11) {
 				this.sshConn.on("x11", (info, accept, reject) => {

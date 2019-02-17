@@ -11,7 +11,6 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	env: any;
 	debugger_args: string[];
 	arguments: string;
-	terminal: string;
 	autorun: string[];
 	ssh: SSHArguments;
 	valuesFormatting: ValuesFormattingMode;
@@ -73,7 +72,7 @@ class GDBDebugSession extends MI2DebugSession {
 			this.isSSH = true;
 			this.trimCWD = args.cwd.replace(/\\/g, "/");
 			this.switchCWD = args.ssh.cwd;
-			this.miDebugger.ssh(args.ssh, args.ssh.cwd, args.target, args.arguments, args.terminal, false).then(() => {
+			this.miDebugger.ssh(args.ssh, args.ssh.cwd, args.target, args.arguments, false).then(() => {
 				if (args.autorun)
 					args.autorun.forEach(command => {
 						this.miDebugger.sendUserInput(command);
@@ -93,7 +92,7 @@ class GDBDebugSession extends MI2DebugSession {
 				this.sendErrorResponse(response, 102, `Failed to SSH: ${err.toString()}`);
 			});
 		} else {
-			this.miDebugger.load(args.cwd, args.target, args.arguments, args.terminal).then(() => {
+			this.miDebugger.load(args.cwd, args.target, args.arguments).then(() => {
 				if (args.autorun)
 					args.autorun.forEach(command => {
 						this.miDebugger.sendUserInput(command);
@@ -140,7 +139,7 @@ class GDBDebugSession extends MI2DebugSession {
 			this.isSSH = true;
 			this.trimCWD = args.cwd.replace(/\\/g, "/");
 			this.switchCWD = args.ssh.cwd;
-			this.miDebugger.ssh(args.ssh, args.ssh.cwd, args.target, "", undefined, true).then(() => {
+			this.miDebugger.ssh(args.ssh, args.ssh.cwd, args.target, "", true).then(() => {
 				if (args.autorun)
 					args.autorun.forEach(command => {
 						this.miDebugger.sendUserInput(command);
