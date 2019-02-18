@@ -1,10 +1,10 @@
 import * as DebugAdapter from 'vscode-debugadapter';
 import { DebugSession, InitializedEvent, TerminatedEvent, StoppedEvent, ThreadEvent, OutputEvent, Thread, StackFrame, Scope, Source, Handles } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { Breakpoint, IBackend, Variable, VariableObject, ValuesFormattingMode, MIError } from './backend/backend';
-import { MINode } from './backend/mi_parse';
-import { expandValue, isExpandable } from './backend/gdb_expansion';
-import { MI2 } from './backend/mi2/mi2';
+import { Variable, VariableObject, ValuesFormattingMode, MIError } from '../backend/backend';
+import { MINode } from '../backend/mi_parse';
+import { expandValue } from '../backend/gdb_expansion';
+import { MI2 } from '../backend/mi2/mi2';
 import { posix } from "path";
 import * as systemPath from "path";
 import * as net from "net";
@@ -35,7 +35,6 @@ export class MI2DebugSession extends DebugSession {
 	protected crashed: boolean;
 	protected debugReady: boolean;
 	protected miDebugger: MI2;
-	protected commandServer: net.Server;
 
 	public constructor(debuggerLinesStartAt1: boolean, isServer: boolean = false) {
 		super(debuggerLinesStartAt1, isServer);
@@ -54,33 +53,6 @@ export class MI2DebugSession extends DebugSession {
 		this.miDebugger.on("thread-created", this.threadCreatedEvent.bind(this));
 		this.miDebugger.on("thread-exited", this.threadExitedEvent.bind(this));
 		this.sendEvent(new InitializedEvent());
-		try {
-			this.commandServer = net.createServer(c => {
-				c.on("data", data => {
-					const rawCmd = data.toString();
-					const spaceIndex = rawCmd.indexOf(" ");
-					let func = rawCmd;
-					let args = [];
-					if (spaceIndex != -1) {
-						func = rawCmd.substr(0, spaceIndex);
-						args = JSON.parse(rawCmd.substr(spaceIndex + 1));
-					}
-					Promise.resolve(this.miDebugger[func].apply(this.miDebugger, args)).then(data => {
-						c.write(data.toString());
-					});
-				});
-			});
-			this.commandServer.on("error", err => {
-				if (process.platform != "win32")
-					this.handleMsg("stderr", "Code-Debug WARNING: Utility Command Server: Error in command socket " + err.toString() + "\nCode-Debug WARNING: The examine memory location command won't work");
-			});
-			if (!fs.existsSync(systemPath.join(os.tmpdir(), "code-debug-sockets")))
-				fs.mkdirSync(systemPath.join(os.tmpdir(), "code-debug-sockets"));
-			this.commandServer.listen(systemPath.join(os.tmpdir(), "code-debug-sockets", "Debug-Instance-" + Math.floor(Math.random() * 36 * 36 * 36 * 36).toString(36)));
-		} catch (e) {
-			if (process.platform != "win32")
-				this.handleMsg("stderr", "Code-Debug WARNING: Utility Command Server: Failed to start " + e.toString() + "\nCode-Debug WARNING: The examine memory location command won't work");
-		}
 	}
 
 	protected setValuesFormattingMode(mode: ValuesFormattingMode) {
@@ -160,8 +132,6 @@ export class MI2DebugSession extends DebugSession {
 			this.miDebugger.detach();
 		else
 			this.miDebugger.stop();
-		this.commandServer.close();
-		this.commandServer = undefined;
 		this.sendResponse(response);
 	}
 

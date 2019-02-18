@@ -1,13 +1,13 @@
 import { MI2DebugSession } from './mibase';
 import { DebugSession } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { MI2_LLDB } from "./backend/mi2/mi2lldb";
-import { ValuesFormattingMode } from './backend/backend';
+import { MI2 } from "../backend/mi2/mi2";
+import { ValuesFormattingMode } from '../backend/backend';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	cwd: string;
 	target: string;
-	lldbmipath: string;
+	gdbpath: string;
 	env: any;
 	debugger_args: string[];
 	arguments: string;
@@ -17,18 +17,21 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	showDevDebugOutput: boolean;
 }
 
-class LLDBDebugSession extends MI2DebugSession {
+
+class GDBDebugSession extends MI2DebugSession {
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
 		response.body.supportsHitConditionalBreakpoints = true;
 		response.body.supportsConfigurationDoneRequest = true;
 		response.body.supportsConditionalBreakpoints = true;
 		response.body.supportsFunctionBreakpoints = true;
 		response.body.supportsEvaluateForHovers = true;
+		response.body.supportsSetVariable = true;
+		response.body.supportsStepBack = true;
 		this.sendResponse(response);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
-		this.miDebugger = new MI2_LLDB(args.lldbmipath || "lldb-mi", [], args.debugger_args, args.env);
+		this.miDebugger = new MI2(args.gdbpath || "gdb", ["-q", "--interpreter=mi2"], args.debugger_args, args.env);
 		this.initDebugger();
 		this.quit = false;
 		this.attached = false;
@@ -52,9 +55,13 @@ class LLDBDebugSession extends MI2DebugSession {
 				this.started = true;
 				if (this.crashed)
 					this.handlePause(undefined);
+			}, err => {
+				this.sendErrorResponse(response, 100, `Failed to Start MI Debugger: ${err.toString()}`);
 			});
+		}, err => {
+			this.sendErrorResponse(response, 103, `Failed to load MI Debugger: ${err.toString()}`);
 		});
 	}
 }
 
-DebugSession.run(LLDBDebugSession);
+DebugSession.run(GDBDebugSession);

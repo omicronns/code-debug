@@ -1,13 +1,13 @@
 import { MI2DebugSession } from './mibase';
-import { DebugSession, InitializedEvent, TerminatedEvent, StoppedEvent, OutputEvent, Thread, StackFrame, Scope, Source, Handles } from 'vscode-debugadapter';
+import { DebugSession } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { MI2_Mago } from "./backend/mi2/mi2mago";
-import { ValuesFormattingMode } from './backend/backend';
+import { MI2_LLDB } from "../backend/mi2/mi2lldb";
+import { ValuesFormattingMode } from '../backend/backend';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	cwd: string;
 	target: string;
-	magomipath: string;
+	lldbmipath: string;
 	env: any;
 	debugger_args: string[];
 	arguments: string;
@@ -17,11 +17,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	showDevDebugOutput: boolean;
 }
 
-class MagoDebugSession extends MI2DebugSession {
-	public constructor(debuggerLinesStartAt1: boolean, isServer: boolean = false) {
-		super(debuggerLinesStartAt1, isServer);
-	}
-
+class LLDBDebugSession extends MI2DebugSession {
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
 		response.body.supportsHitConditionalBreakpoints = true;
 		response.body.supportsConfigurationDoneRequest = true;
@@ -31,12 +27,8 @@ class MagoDebugSession extends MI2DebugSession {
 		this.sendResponse(response);
 	}
 
-	getThreadID() {
-		return 0;
-	}
-
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
-		this.miDebugger = new MI2_Mago(args.magomipath || "mago-mi", ["-q"], args.debugger_args, args.env);
+		this.miDebugger = new MI2_LLDB(args.lldbmipath || "lldb-mi", [], args.debugger_args, args.env);
 		this.initDebugger();
 		this.quit = false;
 		this.attached = false;
@@ -65,4 +57,4 @@ class MagoDebugSession extends MI2DebugSession {
 	}
 }
 
-DebugSession.run(MagoDebugSession);
+DebugSession.run(LLDBDebugSession);

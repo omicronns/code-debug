@@ -2,11 +2,8 @@ import { Breakpoint, IBackend, Thread, Stack, Variable, VariableObject, MIError 
 import * as ChildProcess from "child_process";
 import { EventEmitter } from "events";
 import { parseMI, MINode } from '../mi_parse';
-import * as net from "net";
-import * as fs from "fs";
 import { posix } from "path";
 import * as nativePath from "path";
-const path = posix;
 
 export function escape(str: string) {
 	return str.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
@@ -543,7 +540,7 @@ export class MI2 extends EventEmitter implements IBackend {
 		});
 	}
 
-	prettyPrint: boolean = true;
+	prettyPrint: boolean;
 	printCalls: boolean;
 	debugOutput: boolean;
 	public procEnv: any;

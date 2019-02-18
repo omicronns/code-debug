@@ -10,7 +10,9 @@
             "request": "launch",
             "target": "./a.out",
             "cwd": "${workspaceRoot}",
-            "valuesFormatting": "parseText",
+            "valuesFormatting": "prettyPrinters",
+            "showDevDebugOutput": false,
+            "printCalls": true
         }
     ]
 }
