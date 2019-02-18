@@ -1,47 +1,33 @@
 // A launch configuration that compiles the extension and then opens it inside a new window
 {
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch Extension",
+			"name": "Run Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
-			"stopOnEntry": false,
-			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceRoot}/out/**/*.js"
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
-			"preLaunchTask": "npm"
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "npm: watch"
 		},
 		{
-			"name": "code-debug server",
-			"type": "node",
-			"request": "launch",
-			"runtimeArgs": [ "--nolazy" ],
-			"program": "${workspaceRoot}/src/gdb.ts",
-			"stopOnEntry": false,
-			"args": [ "--server=4711" ],
-			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceRoot}/out/**/*.js"
-			],
-			"cwd": "${workspaceRoot}",
-			"preLaunchTask": "npm"
-		},
-		{
-			"name": "Launch Tests",
+			"name": "Extension Tests",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test" ],
-			"stopOnEntry": false,
-			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceRoot}/out/**/*.js"
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test"
 			],
-			"preLaunchTask": "npm"
+			"outFiles": [
+				"${workspaceFolder}/out/test/**/*.js"
+			],
+			"preLaunchTask": "npm: watch"
 		}
 	]
 }
