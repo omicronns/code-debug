@@ -16,8 +16,7 @@
 		"vscode": "^1.8.0"
 	},
 	"main": "./out/src/extension",
-	"activationEvents": [
-	],
+	"activationEvents": [],
 	"categories": [
 		"Debuggers"
 	],

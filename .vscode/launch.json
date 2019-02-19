@@ -16,6 +16,19 @@
 			"preLaunchTask": "npm: watch"
 		},
 		{
+			"name": "Server",
+			"type": "node",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"program": "${workspaceFolder}/src/frontend/gdb.ts",
+			"args": [
+				"--server=4711"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			]
+		},
+		{
 			"name": "Extension Tests",
 			"type": "extensionHost",
 			"request": "launch",
