@@ -12,7 +12,8 @@
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
             "showDevDebugOutput": false,
-            "printCalls": true
+            "printCalls": true,
+            "debugServer": 4711
         }
     ]
 }
