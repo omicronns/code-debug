@@ -9,6 +9,9 @@ using std::cout;
 using std::endl;
 using std::vector;
 
+
+auto gvec = vector<int>{ 1, 2, 3 };
+
 int main() {
 	auto val = 0;
 	auto vec = vector<int>{ 1, 2, 3 };

@@ -2,8 +2,6 @@ import { Breakpoint, IBackend, Thread, Stack, Variable, VariableObject, MIError 
 import * as ChildProcess from "child_process";
 import { EventEmitter } from "events";
 import { parseMI, MINode } from '../mi_parse';
-import { posix } from "path";
-import * as nativePath from "path";
 
 export function escape(str: string) {
 	return str.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
@@ -45,9 +43,7 @@ export class MI2 extends EventEmitter implements IBackend {
 		}
 	}
 
-	load(cwd: string, target: string, procArgs: string): Thenable<any> {
-		if (!nativePath.isAbsolute(target))
-			target = nativePath.join(cwd, target);
+	spawnDebugger(cwd: string, procArgs: string): Thenable<any> {
 		return new Promise((resolve, reject) => {
 			const args = this.preargs.concat(this.extraargs || []);
 			this.process = ChildProcess.spawn(this.application, args, { cwd: cwd, env: this.procEnv });
@@ -55,8 +51,8 @@ export class MI2 extends EventEmitter implements IBackend {
 			this.process.stderr.on("data", this.stderr.bind(this));
 			this.process.on("exit", (() => { this.emit("quit"); }).bind(this));
 			this.process.on("error", ((err) => { this.emit("launcherror", err); }).bind(this));
-			const promises = this.initCommands(target, cwd);
-			if (procArgs && procArgs.length)
+			const promises = this.initCommands(cwd);
+			if (procArgs && args.length)
 				promises.push(this.sendCommand("exec-arguments " + procArgs));
 			Promise.all(promises).then(() => {
 				this.emit("debug-ready");
@@ -65,15 +61,11 @@ export class MI2 extends EventEmitter implements IBackend {
 		});
 	}
 
-	protected initCommands(target: string, cwd: string, attach: boolean = false) {
-		if (!nativePath.isAbsolute(target))
-			target = nativePath.join(cwd, target);
+	protected initCommands(cwd: string) {
 		const cmds = [
 			this.sendCommand("gdb-set target-async on", true),
 			this.sendCommand("environment-directory \"" + escape(cwd) + "\"", true)
 		];
-		if (!attach)
-			cmds.push(this.sendCommand("file-exec-and-symbols \"" + escape(target) + "\""));
 		if (this.prettyPrint)
 			cmds.push(this.sendCommand("enable-pretty-printing"));
 

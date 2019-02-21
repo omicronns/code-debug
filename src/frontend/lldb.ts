@@ -6,7 +6,6 @@ import { ValuesFormattingMode } from '../backend/backend';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	cwd: string;
-	target: string;
 	lldbmipath: string;
 	env: any;
 	debugger_args: string[];
@@ -39,7 +38,7 @@ class LLDBDebugSession extends MI2DebugSession {
 		this.setValuesFormattingMode(args.valuesFormatting);
 		this.miDebugger.printCalls = !!args.printCalls;
 		this.miDebugger.debugOutput = !!args.showDevDebugOutput;
-		this.miDebugger.load(args.cwd, args.target, args.arguments).then(() => {
+		this.miDebugger.spawnDebugger(args.cwd, args.arguments).then(() => {
 			if (args.autorun)
 				args.autorun.forEach(command => {
 					this.miDebugger.sendUserInput(command);

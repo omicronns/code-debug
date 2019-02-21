@@ -6,15 +6,8 @@ import * as nativePath from "path";
 const path = posix;
 
 export class MI2_LLDB extends MI2 {
-	protected initCommands(target: string, cwd: string, attach: boolean = false) {
-		if (!nativePath.isAbsolute(target))
-			target = nativePath.join(cwd, target);
-		const cmds = [
-			this.sendCommand("gdb-set target-async on")
-		];
-		if (!attach)
-			cmds.push(this.sendCommand("file-exec-and-symbols \"" + escape(target) + "\""));
-		return cmds;
+	protected initCommands(cwd: string) {
+		return [this.sendCommand("gdb-set target-async on")];
 	}
 
 	clearBreakPoints(): Thenable<any> {

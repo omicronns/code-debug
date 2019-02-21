@@ -123,11 +123,9 @@ export class MINode implements MIInfo {
 	}
 }
 
-const tokenRegex = /^\d+/;
 const outOfBandRecordRegex = /^(?:(\d*|undefined)([\*\+\=])|([\~\@\&]))/;
 const resultRecordRegex = /^(\d*)\^(done|running|connected|error|exit)/;
 const newlineRegex = /^\r\n?/;
-const endRegex = /^\(gdb\)\r\n?/;
 const variableRegex = /^([a-zA-Z_\-][a-zA-Z0-9_\-]*)/;
 const asyncClassRegex = /^(.*?),/;
 

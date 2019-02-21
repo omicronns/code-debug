@@ -34,7 +34,7 @@ export interface Variable {
 }
 
 export interface IBackend {
-	load(cwd: string, target: string, procArgs: string): Thenable<any>;
+	spawnDebugger(cwd: string, procArgs: string): Thenable<any>;
 	start(): Thenable<boolean>;
 	stop();
 	detach();

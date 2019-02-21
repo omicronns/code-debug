@@ -56,18 +56,7 @@
 				},
 				"configurationAttributes": {
 					"launch": {
-						"required": [
-							"target"
-						],
 						"properties": {
-							"target": {
-								"type": "string",
-								"description": "Path of executable"
-							},
-							"arguments": {
-								"type": "string",
-								"description": "Arguments to append after the executable. You can also use pipes."
-							},
 							"terminal": {
 								"type": "string",
 								"description": "Leave this field undefined to keep program output in the vscode console at the bottom. If this is set to empty string the program will spawn in a new console using x-terminal-emulator on linux, otherwise with the specified terminal. On windows setting this to an empty string spawns the program in a console, but no other console is supported."
@@ -124,68 +113,8 @@
 						"name": "Debug",
 						"type": "gdb",
 						"request": "launch",
-						"target": "./bin/executable",
 						"cwd": "${workspaceRoot}",
-						"valuesFormatting": "parseText"
-					}
-				],
-				"configurationSnippets": [
-					{
-						"label": "GDB: Launch Program",
-						"description": "Starts the program using gdb",
-						"body": {
-							"type": "gdb",
-							"request": "launch",
-							"name": "${2:Launch Program}",
-							"target": "${1:./bin/executable}",
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"valuesFormatting": "parseText"
-						}
-					},
-					{
-						"label": "GDB: Attach to PID",
-						"description": "Attaches to a running program pid using gdb",
-						"body": {
-							"type": "gdb",
-							"request": "attach",
-							"name": "${2:Attach to PID}",
-							"target": "${1:[PID]}",
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"valuesFormatting": "parseText"
-						}
-					},
-					{
-						"label": "GDB: Connect to gdbserver",
-						"description": "Connects to a gdbserver for debugging",
-						"body": {
-							"type": "gdb",
-							"request": "attach",
-							"name": "${3:Attach to gdbserver}",
-							"executable": "${1:./bin/executable}",
-							"target": ":${2:2345}",
-							"remote": true,
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"valuesFormatting": "parseText"
-						}
-					},
-					{
-						"label": "GDB: Debug external embedded device",
-						"description": "Debugs an embedded microcontroller supported by GDB by attaching over extended-remote",
-						"body": {
-							"type": "gdb",
-							"request": "launch",
-							"name": "${6:Debug Microcontroller}",
-							"target": "extended-remote ${2:/dev/cu.usbmodem00000000}",
-							"executable": "${1:./bin/executable.elf}",
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"autorun": [
-								"monitor tpwr enable",
-								"monitor swdp_scan",
-								"attach 1",
-								"load ${1:./bin/executable.elf}"
-							]
-						},
-						"valuesFormatting": "parseText"
+						"valuesFormatting": "prettyPrinters"
 					}
 				]
 			},
@@ -228,18 +157,7 @@
 				},
 				"configurationAttributes": {
 					"launch": {
-						"required": [
-							"target"
-						],
 						"properties": {
-							"target": {
-								"type": "string",
-								"description": "Path of executable"
-							},
-							"arguments": {
-								"type": "string",
-								"description": "Arguments to append after the executable"
-							},
 							"cwd": {
 								"type": "string",
 								"description": "Path of project"
@@ -292,144 +210,8 @@
 						"name": "Debug",
 						"type": "lldb-mi",
 						"request": "launch",
-						"target": "./bin/executable",
 						"cwd": "${workspaceRoot}",
-						"valuesFormatting": "parseText"
-					}
-				],
-				"configurationSnippets": [
-					{
-						"label": "LLDB: Launch Program",
-						"description": "Starts the program using lldb-mi",
-						"body": {
-							"type": "lldb-mi",
-							"request": "launch",
-							"name": "${2:Launch Program}",
-							"target": "${1:./bin/executable}",
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"valuesFormatting": "parseText"
-						}
-					},
-					{
-						"label": "LLDB: Attach to PID",
-						"description": "Attaches to a running program pid using lldb-mi",
-						"body": {
-							"type": "lldb-mi",
-							"request": "attach",
-							"name": "${2:Attach to PID}",
-							"target": "${1:[PID]}",
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"valuesFormatting": "parseText"
-						}
-					}
-				]
-			},
-			{
-				"type": "mago-mi",
-				"extensions": [],
-				"program": "./out/src/frontend/mago.js",
-				"runtime": "node",
-				"label": "Mago-MI",
-				"enableBreakpointsFor": {
-					"languageIds": [
-						"d"
-					]
-				},
-				"configurationAttributes": {
-					"launch": {
-						"required": [
-							"target"
-						],
-						"properties": {
-							"target": {
-								"type": "string",
-								"description": "Path of executable"
-							},
-							"arguments": {
-								"type": "string",
-								"description": "Arguments to append after the executable"
-							},
-							"cwd": {
-								"type": "string",
-								"description": "Path of project"
-							},
-							"magomipath": {
-								"type": "string",
-								"description": "Path to the mago-mi executable or the command if in PATH",
-								"default": "mago-mi"
-							},
-							"env": {
-								"type": "object",
-								"description": "Environment overriding the mago-mi (and in turn also the process) environment",
-								"default": null
-							},
-							"debugger_args": {
-								"type": "array",
-								"description": "Additional arguments to pass to mago",
-								"default": []
-							},
-							"valuesFormatting": {
-								"type": "string",
-								"description": "Set the way of showing variable values. 'disabled' - show value as is, 'parseText' - parse debuggers output text into structure, 'prettyPrinters' - enable debuggers custom pretty-printers if there are any",
-								"default": "parseText",
-								"enum": [
-									"disabled",
-									"parseText",
-									"prettyPrinters"
-								]
-							},
-							"printCalls": {
-								"type": "boolean",
-								"description": "Prints all mago calls to the console",
-								"default": false
-							},
-							"showDevDebugOutput": {
-								"type": "boolean",
-								"description": "Prints all mago responses to the console",
-								"default": false
-							},
-							"autorun": {
-								"type": "array",
-								"description": "mago commands to run when starting to debug",
-								"default": []
-							}
-						}
-					}
-				},
-				"initialConfigurations": [
-					{
-						"name": "Debug",
-						"type": "mago-mi",
-						"request": "launch",
-						"target": "./bin/executable",
-						"cwd": "${workspaceRoot}",
-						"valuesFormatting": "parseText"
-					}
-				],
-				"configurationSnippets": [
-					{
-						"label": "Mago: Launch Program",
-						"description": "Starts the program using mago-mi",
-						"body": {
-							"type": "mago-mi",
-							"request": "launch",
-							"name": "${2:Launch Program}",
-							"target": "${1:./bin/executable}",
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"valuesFormatting": "parseText"
-						}
-					},
-					{
-						"label": "Mago: Attach to PID",
-						"description": "Attaches to a running program pid using mago-mi",
-						"body": {
-							"type": "mago-mi",
-							"request": "attach",
-							"name": "${2:Attach to PID}",
-							"target": "${1:[PID]}",
-							"cwd": "^\"\\${workspaceRoot}\"",
-							"valuesFormatting": "parseText"
-						}
+						"valuesFormatting": "prettyPrinters"
 					}
 				]
 			}

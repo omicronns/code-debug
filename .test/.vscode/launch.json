@@ -8,10 +8,9 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
-            "target": "./a.out",
             "cwd": "${workspaceRoot}",
-            "valuesFormatting": "disabled",
-            "showDevDebugOutput": false,
+            "valuesFormatting": "prettyPrinters",
+            "showDevDebugOutput": true,
             "printCalls": true,
             "debugServer": 4711
         }
