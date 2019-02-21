@@ -5,18 +5,9 @@ import { Variable, VariableObject, ValuesFormattingMode, MIError } from '../back
 import { MINode } from '../backend/mi_parse';
 import { expandValue } from '../backend/gdb_expansion';
 import { MI2 } from '../backend/mi2/mi2';
-import { posix } from "path";
-import * as systemPath from "path";
-import * as net from "net";
-import * as os from "os";
-import * as fs from "fs";
-
-const resolve = posix.resolve;
-const relative = posix.relative;
 
 class ExtendedVariable {
-	constructor(public name, public options) {
-	}
+	constructor(public name, public options) {}
 }
 
 const STACK_HANDLES_START = 1000;

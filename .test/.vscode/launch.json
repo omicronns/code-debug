@@ -10,7 +10,7 @@
             "request": "launch",
             "target": "./a.out",
             "cwd": "${workspaceRoot}",
-            "valuesFormatting": "prettyPrinters",
+            "valuesFormatting": "disabled",
             "showDevDebugOutput": false,
             "printCalls": true,
             "debugServer": 4711
